@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#10141b" />
+    <meta
+      name="description"
+      content="A clear, live dashboard for keeping track of time around the world."
+    />
+    <title>Worldtime — time around the world</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="#" aria-label="Worldtime home">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 32 32" fill="none">
+              <circle cx="16" cy="16" r="12" stroke="currentColor" stroke-width="2" />
+              <path d="M16 8v8l5 3" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+              <path d="M5 13h22M5 19h22" stroke="currentColor" stroke-width="1.3" opacity=".55" />
+            </svg>
+          </span>
+          <span>worldtime<span class="brand-period">.</span></span>
+        </a>
+        <div class="topbar-note">
+          <span class="live-dot" aria-hidden="true"></span>
+          All clocks are live
+        </div>
+      </header>
+
+      <main>
+        <section class="intro" aria-labelledby="page-title">
+          <div class="intro-copy">
+            <p class="eyebrow"><span class="eyebrow-line"></span> YOUR WORLD, IN SYNC</p>
+            <h1 id="page-title">Time, wherever<br />you need it<span class="title-period">.</span></h1>
+            <p class="intro-description">
+              A little closer to everyone, no matter where they are.
+            </p>
+          </div>
+
+          <aside class="local-card" aria-label="Your local time">
+            <div class="local-card-top">
+              <span class="local-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none">
+                  <path d="M12 21s7-6.1 7-12a7 7 0 1 0-14 0c0 5.9 7 12 7 12Z" stroke="currentColor" stroke-width="1.7" />
+                  <circle cx="12" cy="9" r="2.4" stroke="currentColor" stroke-width="1.7" />
+                </svg>
+              </span>
+              <span class="local-label">YOUR LOCAL TIME</span>
+              <span class="local-live"><span class="live-dot"></span> LIVE</span>
+            </div>
+            <p class="local-zone" id="local-zone">Detecting your time zone…</p>
+            <p class="local-time" id="local-time" aria-live="off">--:--:--</p>
+            <p class="local-date" id="local-date">Loading date…</p>
+          </aside>
+        </section>
+
+        <section class="clocks-section" aria-labelledby="clocks-heading">
+          <div class="section-heading">
+            <div class="section-title-wrap">
+              <div class="section-title-line">
+                <h2 id="clocks-heading">Your time zones</h2>
+                <span class="clock-count" id="clock-count">0</span>
+              </div>
+              <p class="section-caption">The places you’re keeping close</p>
+            </div>
+            <div class="section-actions">
+              <div class="format-control" role="group" aria-label="Time format">
+                <button class="format-option" id="format-12h" type="button" aria-pressed="false" title="Show times with AM and PM">12h <span>AM/PM</span></button>
+                <button class="format-option" id="format-24h" type="button" aria-pressed="true" title="Show times in 24-hour format">24h <span>military</span></button>
+              </div>
+              <button class="add-button" id="open-picker" type="button">
+                <span aria-hidden="true" class="plus-icon">+</span>
+                <span>Add a place</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="clock-grid" id="clock-grid" aria-live="polite"></div>
+          <div class="empty-state" id="empty-state" hidden>
+            <span class="empty-icon" aria-hidden="true">◷</span>
+            <h3>Your world is wide open</h3>
+            <p>Add a place to start building your timezone dashboard.</p>
+            <button class="text-button" id="empty-add" type="button">Find a time zone <span aria-hidden="true">→</span></button>
+          </div>
+        </section>
+
+        <footer class="footer">
+          <span>Make every hour count<span class="footer-period">.</span></span>
+          <span class="footer-right"><span class="live-dot"></span> Updated in real time</span>
+        </footer>
+      </main>
+    </div>
+
+    <dialog class="picker-dialog" id="picker-dialog" aria-labelledby="picker-title">
+      <div class="picker-header">
+        <div>
+          <p class="eyebrow"><span class="eyebrow-line"></span> FIND YOUR PLACE</p>
+          <h2 id="picker-title">Add a time zone</h2>
+        </div>
+        <button class="close-button" id="close-picker" type="button" aria-label="Close">×</button>
+      </div>
+      <label class="search-box" for="zone-search">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <circle cx="10.8" cy="10.8" r="6.8" stroke="currentColor" stroke-width="1.7" />
+          <path d="m16 16 4 4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+        </svg>
+        <input id="zone-search" type="search" placeholder="Search a city or country…" autocomplete="off" />
+        <kbd>/</kbd>
+      </label>
+      <p class="picker-hint">POPULAR PLACES</p>
+      <div class="zone-list" id="zone-list"></div>
+      <p class="no-results" id="no-results" hidden>No places match your search.</p>
+      <p class="picker-footnote">Times adjust automatically for daylight saving.</p>
+    </dialog>
+  </body>
+</html>

@@ -399,7 +399,9 @@ h1 {
   border: 1px solid rgb(255 255 255 / 7%);
   border-radius: 8px;
   background: #222a33;
+  font-family: "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif;
   font-size: 18px;
+  font-variant-emoji: emoji;
 }
 
 .city-meta {

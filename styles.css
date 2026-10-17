@@ -367,9 +367,38 @@ h1 {
   transition: border-color 180ms ease, transform 180ms ease;
 }
 
+.clock-card[draggable="true"] {
+  cursor: grab;
+}
+
 .clock-card:hover {
   transform: translateY(-2px);
   border-color: #414a54;
+}
+
+.clock-card.is-dragging {
+  cursor: grabbing;
+  opacity: 0.45;
+  transform: scale(0.98);
+  border-color: var(--accent);
+}
+
+.clock-card.drop-before,
+.clock-card.drop-left {
+  box-shadow: inset 0 3px 0 var(--accent);
+}
+
+.clock-card.drop-after,
+.clock-card.drop-right {
+  box-shadow: inset 0 -3px 0 var(--accent);
+}
+
+.clock-card.drop-left {
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+.clock-card.drop-right {
+  box-shadow: inset -3px 0 0 var(--accent);
 }
 
 .clock-card::after {
@@ -846,4 +875,10 @@ h1 {
     scroll-behavior: auto !important;
     transition-duration: 0.01ms !important;
   }
+}
+.brand-logo {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
 }

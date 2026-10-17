@@ -511,6 +511,13 @@ function getDayDifference(zone, now) {
   return localDayNumber(zone, now) - today;
 }
 
+function formatDayDifference(difference) {
+  if (difference === 0) return "Today";
+  if (difference === 1) return "Tomorrow";
+  if (difference === -1) return "Yesterday";
+  return difference > 0 ? `+${difference} days` : `${difference} days`;
+}
+
 function loadSelectedPlaces() {
   try {
     const saved = JSON.parse(localStorage.getItem(storageKey));
@@ -541,6 +548,122 @@ function saveSelectedPlaces() {
   }
 }
 
+let draggedPlaceId = null;
+let draggedCard = null;
+let dropTarget = null;
+
+function clearDropIndicator() {
+  if (dropTarget) {
+    dropTarget.classList.remove("drop-before", "drop-after", "drop-left", "drop-right");
+    dropTarget = null;
+  }
+}
+
+function getDropPosition(card, clientX, clientY) {
+  const targetBounds = card.getBoundingClientRect();
+  const sourceBounds = draggedCard.getBoundingClientRect();
+  const sharesRow = sourceBounds.top < targetBounds.bottom && sourceBounds.bottom > targetBounds.top;
+
+  if (sharesRow) {
+    return clientX < targetBounds.left + targetBounds.width / 2
+      ? { position: "before", indicator: "drop-left" }
+      : { position: "after", indicator: "drop-right" };
+  }
+
+  return clientY < targetBounds.top + targetBounds.height / 2
+    ? { position: "before", indicator: "drop-before" }
+    : { position: "after", indicator: "drop-after" };
+}
+
+function animateCardReorder(previousPositions) {
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+  for (const card of clockGrid.querySelectorAll(".clock-card")) {
+    const previousPosition = previousPositions.get(card.dataset.placeId);
+    if (!previousPosition) continue;
+
+    const currentPosition = card.getBoundingClientRect();
+    const offsetX = previousPosition.left - currentPosition.left;
+    const offsetY = previousPosition.top - currentPosition.top;
+    if (offsetX || offsetY) {
+      card.animate(
+        [
+          { transform: `translate(${offsetX}px, ${offsetY}px)` },
+          { transform: "translate(0, 0)" },
+        ],
+        { duration: 180, easing: "ease-out" },
+      );
+    }
+  }
+}
+
+clockGrid.addEventListener("dragstart", (event) => {
+  const card = event.target.closest(".clock-card");
+  if (!card || event.target.closest("button")) {
+    event.preventDefault();
+    return;
+  }
+
+  draggedPlaceId = card.dataset.placeId;
+  draggedCard = card;
+  card.classList.add("is-dragging");
+  event.dataTransfer.effectAllowed = "move";
+  event.dataTransfer.setData("text/plain", draggedPlaceId);
+});
+
+clockGrid.addEventListener("dragover", (event) => {
+  if (!draggedPlaceId) return;
+
+  const card = event.target.closest(".clock-card");
+  if (!card || card.dataset.placeId === draggedPlaceId) {
+    clearDropIndicator();
+    return;
+  }
+
+  event.preventDefault();
+  event.dataTransfer.dropEffect = "move";
+  clearDropIndicator();
+  dropTarget = card;
+  const placement = getDropPosition(card, event.clientX, event.clientY);
+  card.classList.add(placement.indicator);
+});
+
+clockGrid.addEventListener("drop", (event) => {
+  const card = event.target.closest(".clock-card");
+  if (!draggedPlaceId || !card || card.dataset.placeId === draggedPlaceId) return;
+
+  event.preventDefault();
+  const sourceIndex = selectedPlaceIds.indexOf(draggedPlaceId);
+  const targetIndex = selectedPlaceIds.indexOf(card.dataset.placeId);
+  if (sourceIndex < 0 || targetIndex < 0) return;
+
+  const position = getDropPosition(card, event.clientX, event.clientY).position;
+  const [movedPlaceId] = selectedPlaceIds.splice(sourceIndex, 1);
+  const adjustedTargetIndex = targetIndex > sourceIndex ? targetIndex - 1 : targetIndex;
+  const insertionIndex = adjustedTargetIndex + (position === "after" ? 1 : 0);
+  selectedPlaceIds.splice(insertionIndex, 0, movedPlaceId);
+  const previousPositions = new Map(
+    [...clockGrid.querySelectorAll(".clock-card")].map((item) => [
+      item.dataset.placeId,
+      item.getBoundingClientRect(),
+    ]),
+  );
+  saveSelectedPlaces();
+  clockGrid.querySelector(".is-dragging")?.classList.remove("is-dragging");
+  clearDropIndicator();
+  draggedPlaceId = null;
+  draggedCard = null;
+  renderCards();
+  animateCardReorder(previousPositions);
+});
+
+clockGrid.addEventListener("dragend", () => {
+  clockGrid.querySelector(".is-dragging")?.classList.remove("is-dragging");
+  clearDropIndicator();
+  draggedPlaceId = null;
+  draggedCard = null;
+});
+
 function renderCards() {
   const now = new Date();
   const selectedPlaces = selectedPlaceIds
@@ -554,11 +677,13 @@ function renderCards() {
 
   for (const place of selectedPlaces) {
     const difference = getDayDifference(place.zone, now);
-    const differenceLabel =
-      difference === 0 ? "Today" : difference === 1 ? "Tomorrow" : difference === -1 ? "Yesterday" : difference > 0 ? `+${difference} days` : `${difference} days`;
+    const differenceLabel = formatDayDifference(difference);
 
     const card = document.createElement("article");
     card.className = "clock-card";
+    card.draggable = true;
+    card.dataset.placeId = place.id;
+    card.setAttribute("aria-roledescription", "Draggable time zone");
     card.innerHTML = `
       <div class="card-top">
         <span class="city-flag" aria-hidden="true">${place.flag}</span>
@@ -576,6 +701,20 @@ function renderCards() {
     `;
     card.querySelector(".remove-clock").addEventListener("click", () => removePlace(place.id));
     clockGrid.append(card);
+  }
+}
+
+function updateCardClocks(now) {
+  for (const card of clockGrid.querySelectorAll(".clock-card")) {
+    const place = places.find((candidate) => candidate.id === card.dataset.placeId);
+    if (!place) continue;
+    const difference = getDayDifference(place.zone, now);
+    const differenceLabel = formatDayDifference(difference);
+    card.querySelector(".card-time").textContent = formatTime(place.zone, now);
+    card.querySelector(".card-date").textContent = formatDate(place.zone, now);
+    const differenceElement = card.querySelector(".day-difference");
+    differenceElement.textContent = differenceLabel;
+    differenceElement.classList.toggle("today", difference === 0);
   }
 }
 
@@ -671,7 +810,7 @@ function updateLocalClock() {
     day: "numeric",
     year: "numeric",
   }).format(now);
-  renderCards();
+  updateCardClocks(now);
 }
 
 document.querySelector("#open-picker").addEventListener("click", () => {
@@ -700,6 +839,7 @@ document.addEventListener("keydown", (event) => {
 });
 
 updateLocalClock();
+renderCards();
 renderTimeFormat();
 renderPicker();
 window.setInterval(updateLocalClock, 1000);

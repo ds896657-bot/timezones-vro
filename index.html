@@ -93,6 +93,15 @@
           </div>
 
           <div id="timezones-panel" role="tabpanel" aria-labelledby="tab-timezones">
+            <div class="timezone-toolbar">
+              <label class="timezone-sort-label" for="timezone-sort">Sort places</label>
+              <select class="friend-sort" id="timezone-sort">
+                <option value="custom">Custom order</option>
+                <option value="alphabetical">Alphabetical</option>
+                <option value="local-time">Local time</option>
+                <option value="offset">UTC offset</option>
+              </select>
+            </div>
             <div class="clock-grid" id="clock-grid" aria-live="polite"></div>
             <div class="empty-state" id="empty-state" hidden>
               <span class="empty-icon" aria-hidden="true">◷</span>

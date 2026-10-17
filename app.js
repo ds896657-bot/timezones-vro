@@ -455,6 +455,8 @@ const storageKey = "worldtime.selected-places";
 const clockGrid = document.querySelector("#clock-grid");
 const clockCount = document.querySelector("#clock-count");
 const emptyState = document.querySelector("#empty-state");
+const timezoneSortSelect = document.querySelector("#timezone-sort");
+const timezoneSortStorageKey = "worldtime.timezone-sort";
 const pickerDialog = document.querySelector("#picker-dialog");
 const zoneList = document.querySelector("#zone-list");
 const searchInput = document.querySelector("#zone-search");
@@ -517,6 +519,50 @@ let friendView = loadFriendView();
 let friendSize = loadFriendSize();
 let friendSort = loadFriendSort();
 let lastLocalTimeSortMinute = -1;
+let timezoneSort = loadTimezoneSort();
+let lastTimezoneSortMinute = -1;
+
+function loadTimezoneSort() {
+  try {
+    const saved = localStorage.getItem(timezoneSortStorageKey);
+    return ["alphabetical", "local-time", "offset"].includes(saved) ? saved : "custom";
+  } catch (error) {
+    console.warn("Could not load the saved time zone sort order.", error);
+    return "custom";
+  }
+}
+
+function setTimezoneSort(sort) {
+  timezoneSort = sort;
+  lastTimezoneSortMinute = Math.floor(Date.now() / 60_000);
+  timezoneSortSelect.value = sort;
+  try {
+    localStorage.setItem(timezoneSortStorageKey, timezoneSort);
+  } catch (error) {
+    console.warn("Could not save the selected time zone sort order.", error);
+  }
+  renderCards();
+}
+
+function getTimezoneDisplayOrder(now) {
+  const selectedPlaces = selectedPlaceIds
+    .map((id) => places.find((place) => place.id === id))
+    .filter(Boolean);
+  if (timezoneSort === "alphabetical") {
+    selectedPlaces.sort((a, b) => a.city.localeCompare(b.city, undefined, { sensitivity: "base" }));
+  } else if (timezoneSort === "local-time") {
+    selectedPlaces.sort((a, b) =>
+      getLocalClockMinutes(a.zone, now) - getLocalClockMinutes(b.zone, now) ||
+      a.city.localeCompare(b.city, undefined, { sensitivity: "base" }),
+    );
+  } else if (timezoneSort === "offset") {
+    selectedPlaces.sort((a, b) =>
+      getZoneOffsetMinutes(b.zone, now) - getZoneOffsetMinutes(a.zone, now) ||
+      a.city.localeCompare(b.city, undefined, { sensitivity: "base" }),
+    );
+  }
+  return selectedPlaces;
+}
 
 function loadFriendView() {
   try {
@@ -1163,6 +1209,10 @@ function animateCardReorder(previousPositions) {
 }
 
 clockGrid.addEventListener("dragstart", (event) => {
+  if (timezoneSort !== "custom") {
+    event.preventDefault();
+    return;
+  }
   const card = event.target.closest(".clock-card");
   if (!card || event.target.closest("button")) {
     event.preventDefault();
@@ -1194,6 +1244,7 @@ clockGrid.addEventListener("dragover", (event) => {
 });
 
 clockGrid.addEventListener("drop", (event) => {
+  if (timezoneSort !== "custom") return;
   const card = event.target.closest(".clock-card");
   if (!draggedPlaceId || !card || card.dataset.placeId === draggedPlaceId) return;
 
@@ -1231,9 +1282,7 @@ clockGrid.addEventListener("dragend", () => {
 
 function renderCards() {
   const now = new Date();
-  const selectedPlaces = selectedPlaceIds
-    .map((id) => places.find((place) => place.id === id))
-    .filter(Boolean);
+  const selectedPlaces = getTimezoneDisplayOrder(now);
 
   updateCount();
   emptyState.hidden = selectedPlaces.length > 0;
@@ -1246,9 +1295,9 @@ function renderCards() {
 
     const card = document.createElement("article");
     card.className = "clock-card";
-    card.draggable = true;
+    card.draggable = timezoneSort === "custom";
     card.dataset.placeId = place.id;
-    card.setAttribute("aria-roledescription", "Draggable time zone");
+    card.setAttribute("aria-roledescription", timezoneSort === "custom" ? "Draggable time zone" : "Time zone");
     card.innerHTML = `
       <div class="card-top">
         <span class="city-flag" aria-hidden="true">${place.flag}</span>
@@ -1270,6 +1319,19 @@ function renderCards() {
 }
 
 function updateCardClocks(now) {
+  if (timezoneSort === "local-time" || timezoneSort === "offset") {
+    const currentMinute = Math.floor(now.getTime() / 60_000);
+    if (currentMinute !== lastTimezoneSortMinute) {
+      lastTimezoneSortMinute = currentMinute;
+      const expectedOrder = getTimezoneDisplayOrder(now).map((place) => place.id);
+      const renderedOrder = [...clockGrid.querySelectorAll(".clock-card")]
+        .map((card) => card.dataset.placeId);
+      if (expectedOrder.join("\0") !== renderedOrder.join("\0")) {
+        renderCards();
+        return;
+      }
+    }
+  }
   for (const card of clockGrid.querySelectorAll(".clock-card")) {
     const place = places.find((candidate) => candidate.id === card.dataset.placeId);
     if (!place) continue;
@@ -1748,6 +1810,7 @@ document.querySelector("#empty-add").addEventListener("click", () => {
 
 timezonesTab.addEventListener("click", () => setActiveTab("timezones"));
 friendsTab.addEventListener("click", () => setActiveTab("friends"));
+timezoneSortSelect.addEventListener("change", () => setTimezoneSort(timezoneSortSelect.value));
 friendGridViewButton.addEventListener("click", () => setFriendView("grid"));
 friendListViewButton.addEventListener("click", () => setFriendView("list"));
 friendSearchInput.addEventListener("input", () => renderFriends());
@@ -1822,6 +1885,7 @@ document.addEventListener("keydown", (event) => {
 });
 
 updateLocalClock();
+timezoneSortSelect.value = timezoneSort;
 renderCards();
 renderFriendView();
 renderFriendPreferences();

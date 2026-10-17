@@ -421,6 +421,15 @@ h1 {
   margin: -3px 0 14px;
 }
 
+.timezone-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin: 0 0 14px;
+}
+
+.timezone-sort-label,
 .friend-search-label,
 .friend-sort-label {
   color: var(--muted);
@@ -554,7 +563,61 @@ h1 {
 }
 
 .friends-grid[data-size="compact"] .friend-card {
-  --friend-card-height: 165px;
+  --friend-card-height: 190px;
+}
+
+.friends-grid[data-size="compact"] .friend-glass-panel {
+  padding: 9px 10px 6px;
+}
+
+.friends-grid[data-size="compact"] .friend-name {
+  margin-bottom: 2px;
+  font-size: 15px;
+}
+
+.friends-grid[data-size="compact"] .friend-location {
+  font-size: 10px;
+}
+
+.friends-grid[data-size="compact"] .friend-zone {
+  margin-top: 4px;
+  font-size: 8px;
+}
+
+.friends-grid[data-size="compact"] .friend-time {
+  margin: 6px 0 3px;
+  font-size: clamp(20px, 2.3vw, 27px);
+}
+
+.friends-grid[data-size="compact"] .friend-offset {
+  padding: 3px 6px;
+}
+
+.friends-grid[data-size="compact"] .friend-card-actions {
+  gap: 4px;
+  margin-top: 4px;
+  padding-top: 3px;
+}
+
+.friends-grid[data-size="compact"] .friend-card-actions > .friend-action {
+  min-width: 24px;
+  height: 22px;
+  padding-inline: 3px;
+  font-size: 9px;
+}
+
+.friends-grid[data-size="compact"] .friend-card-actions > .friend-action:not(.friend-delete, .friend-pin) {
+  min-width: 30px;
+}
+
+.friends-grid[data-size="compact"] .friend-reorder-actions {
+  gap: 0;
+}
+
+.friends-grid[data-size="compact"] .friend-reorder-actions .friend-action {
+  width: 19px;
+  min-width: 19px;
+  height: 11px;
 }
 
 .friends-grid[data-size="standard"] .friend-card {
@@ -1603,6 +1666,10 @@ h1 {
   }
 
   .friends-toolbar {
+    justify-content: flex-start;
+  }
+
+  .timezone-toolbar {
     justify-content: flex-start;
   }
 }

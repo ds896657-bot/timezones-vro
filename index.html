@@ -18,6 +18,9 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="styles.css" />
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="sync-config.js"></script>
+    <script src="account-sync.js" defer></script>
     <script src="app.js" defer></script>
   </head>
   <body>
@@ -32,6 +35,10 @@
         <div class="topbar-note">
           <span class="live-dot" aria-hidden="true"></span>
           All clocks are live
+        </div>
+        <div class="account-controls">
+          <span class="sync-indicator" id="sync-indicator" role="status">Saved on this device</span>
+          <button class="account-button" id="account-button" type="button">Sign in</button>
         </div>
       </header>
 
@@ -173,6 +180,22 @@
       <div class="zone-list" id="zone-list"></div>
       <p class="no-results" id="no-results" hidden>No places match your search.</p>
       <p class="picker-footnote" id="picker-footnote">Times adjust automatically for daylight saving.</p>
+    </dialog>
+
+    <dialog class="account-dialog" id="account-dialog" aria-labelledby="account-title">
+      <div class="picker-header">
+        <div>
+          <p class="eyebrow"><span class="eyebrow-line"></span> YOUR WORLD, EVERYWHERE</p>
+          <h2 id="account-title">Sync your dashboard</h2>
+        </div>
+        <button class="close-button" id="close-account-dialog" type="button" aria-label="Close">×</button>
+      </div>
+      <p class="account-description">Sign in with Google to keep your time zones, friends, and display settings in sync across your devices.</p>
+      <p class="account-status" id="account-status" role="status" aria-live="polite">Checking account settings…</p>
+      <button class="add-button account-google-button" id="google-signin" type="button">Continue with Google</button>
+      <button class="text-button account-signout-button" id="retry-sync" type="button" hidden>Sync now</button>
+      <button class="text-button account-signout-button" id="signout" type="button" hidden>Sign out</button>
+      <a class="account-setup-link" href="SUPABASE_SETUP.md">Setup instructions</a>
     </dialog>
 
     <dialog class="friend-dialog" id="friend-dialog" aria-labelledby="friend-dialog-title">

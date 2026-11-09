@@ -1,3 +1,6 @@
+(async () => {
+  await window.worldtimeAccountReady;
+
 const places = [
   { id: "new-york", city: "New York", country: "United States", region: "North America", flag: "🇺🇸", zone: "America/New_York" },
   { id: "los-angeles", city: "Los Angeles", country: "United States", region: "North America", flag: "🇺🇸", zone: "America/Los_Angeles" },
@@ -1896,3 +1899,4 @@ window.setInterval(updateLocalClock, 1000);
 window.setInterval(() => {
   if (pickerDialog.open) renderPicker();
 }, 30_000);
+})();

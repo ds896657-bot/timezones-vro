@@ -164,18 +164,6 @@ button {
   justify-content: center;
 }
 
-.account-setup-link {
-  display: block;
-  margin-top: 18px;
-  color: var(--muted);
-  font-size: 12px;
-  text-align: center;
-}
-
-.account-setup-link:hover {
-  color: var(--accent);
-}
-
 .live-dot {
   width: 7px;
   height: 7px;

@@ -13,7 +13,7 @@ A modern, dark-themed world clock and time zone dashboard that lets you track th
 
 ## 🚀 Live Demo
 
-**[Open World Clock](https://ds896657-bot.github.io/timezones-vro/)**
+**[Open World Clock](https://hachisnt.github.io/timezones-vro/)**
 
 ## 📥 Download for Windows
 

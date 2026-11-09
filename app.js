@@ -470,6 +470,11 @@ const localZone = document.querySelector("#local-zone");
 const formatStorageKey = "worldtime.time-format";
 const format12hButton = document.querySelector("#format-12h");
 const format24hButton = document.querySelector("#format-24h");
+const timePreviewSlider = document.querySelector("#time-preview");
+const timePreviewValue = document.querySelector("#time-preview-value");
+const timePreviewReset = document.querySelector("#time-preview-reset");
+const clockStatus = document.querySelector("#clock-status");
+const localLiveLabel = document.querySelector("#local-live-label");
 const friendsStorageKey = "worldtime.friends";
 const timezonesTab = document.querySelector("#tab-timezones");
 const friendsTab = document.querySelector("#tab-friends");
@@ -524,6 +529,27 @@ let friendSort = loadFriendSort();
 let lastLocalTimeSortMinute = -1;
 let timezoneSort = loadTimezoneSort();
 let lastTimezoneSortMinute = -1;
+let previewHours = 0;
+
+function getDisplayedNow() {
+  return new Date(Date.now() + previewHours * 60 * 60 * 1000);
+}
+
+function setPreviewHours(hours) {
+  previewHours = hours;
+  const isPreviewing = hours > 0;
+  const label = hours === 0 ? "Now" : `+${hours} hour${hours === 1 ? "" : "s"}`;
+  timePreviewSlider.value = String(hours);
+  timePreviewSlider.setAttribute("aria-valuetext", label);
+  timePreviewValue.value = label;
+  timePreviewValue.textContent = label;
+  timePreviewReset.disabled = !isPreviewing;
+  lastTimezoneSortMinute = -1;
+  lastLocalTimeSortMinute = -1;
+  updateLocalClock();
+  if (pickerDialog.open) renderPicker();
+  if (friendDialog.open) renderFriendZoneOptions();
+}
 
 function loadTimezoneSort() {
   try {
@@ -537,7 +563,7 @@ function loadTimezoneSort() {
 
 function setTimezoneSort(sort) {
   timezoneSort = sort;
-  lastTimezoneSortMinute = Math.floor(Date.now() / 60_000);
+  lastTimezoneSortMinute = Math.floor(getDisplayedNow().getTime() / 60_000);
   timezoneSortSelect.value = sort;
   try {
     localStorage.setItem(timezoneSortStorageKey, timezoneSort);
@@ -640,7 +666,7 @@ function setFriendSize(size) {
 
 function setFriendSort(sort) {
   friendSort = sort;
-  lastLocalTimeSortMinute = Math.floor(Date.now() / 60_000);
+  lastLocalTimeSortMinute = Math.floor(getDisplayedNow().getTime() / 60_000);
   renderFriendPreferences();
   renderFriends();
   friendPreferenceStatus.textContent = saveFriendPreference(friendSortStorageKey, friendSort)
@@ -839,7 +865,7 @@ function initialsFor(name) {
   return name.trim().split(/\s+/).slice(0, 2).map((part) => part[0]).join("").toUpperCase();
 }
 
-function renderFriends(now = new Date()) {
+function renderFriends(now = getDisplayedNow()) {
   friendsGrid.replaceChildren();
   const displayedFriends = getFriendDisplayOrder(now);
   const canReorder = friendSort === "custom" && !friendSearchInput.value.trim();
@@ -1003,7 +1029,7 @@ function animateFriendReorder(previousPositions) {
 
 function moveFriend(friendId, direction, focusAction) {
   if (friendSort !== "custom" || friendSearchInput.value.trim()) return;
-  const orderedFriends = getFriendDisplayOrder(new Date());
+  const orderedFriends = getFriendDisplayOrder(getDisplayedNow());
   const sourceIndex = orderedFriends.findIndex((friend) => friend.id === friendId);
   const targetIndex = sourceIndex + direction;
   if (sourceIndex < 0 || targetIndex < 0 || targetIndex >= orderedFriends.length) return;
@@ -1091,7 +1117,7 @@ friendsGrid.addEventListener("drop", (event) => {
   if (!draggedFriendId || !card || card.dataset.friendId === draggedFriendId) return;
   event.preventDefault();
 
-  const orderedFriends = getFriendDisplayOrder(new Date());
+  const orderedFriends = getFriendDisplayOrder(getDisplayedNow());
   const sourceIndex = orderedFriends.findIndex((friend) => friend.id === draggedFriendId);
   const targetIndex = orderedFriends.findIndex((friend) => friend.id === card.dataset.friendId);
   if (sourceIndex < 0 || targetIndex < 0) return;
@@ -1284,7 +1310,7 @@ clockGrid.addEventListener("dragend", () => {
 });
 
 function renderCards() {
-  const now = new Date();
+  const now = getDisplayedNow();
   const selectedPlaces = getTimezoneDisplayOrder(now);
 
   updateCount();
@@ -1423,7 +1449,7 @@ function renderPicker() {
       .includes(query),
   );
   const visiblePlaces = query ? filteredPlaces : filteredPlaces.slice(0, 50);
-  const now = new Date();
+  const now = getDisplayedNow();
 
   zoneList.replaceChildren();
   noResults.hidden = filteredPlaces.length > 0;
@@ -1479,8 +1505,13 @@ function removePlace(id) {
 }
 
 function updateLocalClock() {
-  const now = new Date();
+  const now = getDisplayedNow();
   const zone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const isPreviewing = previewHours > 0;
+  clockStatus.textContent = isPreviewing
+    ? `Previewing ${previewHours} hour${previewHours === 1 ? "" : "s"} ahead`
+    : "All clocks are live";
+  localLiveLabel.textContent = isPreviewing ? "PREVIEW" : "LIVE";
   localZone.textContent = zone.replaceAll("_", " ");
   localTime.textContent = formatTime(zone, now, true);
   localDate.textContent = getFormatter(zone, {
@@ -1528,7 +1559,7 @@ function renderFriendZoneOptions() {
     meta.append(city, country);
     const currentTime = document.createElement("span");
     currentTime.className = "zone-current-time";
-    currentTime.textContent = formatTime(optionZone);
+    currentTime.textContent = formatTime(optionZone, getDisplayedNow());
     option.append(flag, meta, currentTime);
     option.addEventListener("click", () => {
       selectedFriendPlace = { ...place, city: optionCity, zone: optionZone };
@@ -1814,6 +1845,10 @@ document.querySelector("#empty-add").addEventListener("click", () => {
 timezonesTab.addEventListener("click", () => setActiveTab("timezones"));
 friendsTab.addEventListener("click", () => setActiveTab("friends"));
 timezoneSortSelect.addEventListener("change", () => setTimezoneSort(timezoneSortSelect.value));
+timePreviewSlider.addEventListener("input", () => {
+  setPreviewHours(Number(timePreviewSlider.value));
+});
+timePreviewReset.addEventListener("click", () => setPreviewHours(0));
 friendGridViewButton.addEventListener("click", () => setFriendView("grid"));
 friendListViewButton.addEventListener("click", () => setFriendView("list"));
 friendSearchInput.addEventListener("input", () => renderFriends());

@@ -34,7 +34,7 @@
         </a>
         <div class="topbar-note">
           <span class="live-dot" aria-hidden="true"></span>
-          All clocks are live
+          <span id="clock-status">All clocks are live</span>
         </div>
         <div class="account-controls">
           <span class="sync-indicator" id="sync-indicator" role="status">Saved on this device</span>
@@ -61,12 +61,36 @@
                 </svg>
               </span>
               <span class="local-label">YOUR LOCAL TIME</span>
-              <span class="local-live"><span class="live-dot"></span> LIVE</span>
+              <span class="local-live"><span class="live-dot"></span> <span id="local-live-label">LIVE</span></span>
             </div>
             <p class="local-zone" id="local-zone">Detecting your time zone…</p>
             <p class="local-time" id="local-time" aria-live="off">--:--:--</p>
             <p class="local-date" id="local-date">Loading date…</p>
           </aside>
+        </section>
+
+        <section class="time-scrubber" aria-label="Simulate a future time">
+          <div class="time-scrubber-copy">
+            <span class="time-scrubber-icon" aria-hidden="true">↗</span>
+            <span>
+              <strong>Time scrubber</strong>
+              <span class="time-scrubber-hint">Preview up to 48 hours ahead</span>
+            </span>
+          </div>
+          <span class="time-scrubber-now">Now</span>
+          <input
+            class="time-scrubber-range"
+            id="time-preview"
+            type="range"
+            min="0"
+            max="48"
+            step="1"
+            value="0"
+            aria-label="Hours ahead"
+            aria-valuetext="Now"
+          />
+          <output class="time-scrubber-value" id="time-preview-value" for="time-preview" aria-live="polite">Now</output>
+          <button class="time-scrubber-reset" id="time-preview-reset" type="button" disabled>Reset</button>
         </section>
 
         <section class="clocks-section" aria-labelledby="clocks-heading">
